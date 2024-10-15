@@ -18,6 +18,7 @@ import {
   getAssociatedTokenAddressSync,
   getMinimumBalanceForRentExemptMint,
 } from "npm:@solana/spl-token";
+import { Buffer } from "node:buffer";
 
 export const TOKEN_PROGRAM = TOKEN_2022_PROGRAM_ID;
 
@@ -37,7 +38,13 @@ export function createKeypairs(program: Program<Defi101>, count: number) {
 export async function createMints(program: Program<Defi101>, count: number) {
   const provider = program.provider!;
   const wallet = provider.publicKey!;
-  const mints = makeKeypairs(count);
+  const unsortedMints = makeKeypairs(count);
+
+  const mints = unsortedMints.sort((a, b) =>
+    a.publicKey.toBase58().localeCompare(b.publicKey.toBase58())
+  );
+
+  console.log(mints.map((m) => m.publicKey.toBase58()));
 
   const minimumLamports = await getMinimumBalanceForRentExemptMint(
     program.provider.connection
@@ -64,7 +71,7 @@ export async function createMints(program: Program<Defi101>, count: number) {
   );
 
   return {
-    mints: mints,
+    mints,
     createMintInstructions: [
       ...createMintInstructions,
       ...initializeMint2Instructions,
@@ -144,7 +151,12 @@ export async function prepare(
 
   // await confirmTransaction(program.provider.connection, transactionSignature);
 
-  return { keypairs, mints: mints.map((m) => m.publicKey) };
+  const vault = PublicKey.findProgramAddressSync(
+    [Buffer.from("vault")],
+    program.programId
+  )[0];
+
+  return { keypairs, vault, mints: mints.map((m) => m.publicKey) };
 }
 
 export function ata(mint: PublicKey, keypair: Keypair) {
