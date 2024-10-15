@@ -2,6 +2,11 @@ use anchor_lang::prelude::*;
 
 mod create;
 mod deposit;
+mod swap;
+
+use create::*;
+use deposit::*;
+use swap::*;
 
 declare_id!("GwAUakR2tZWd5WQmvXfvSZJHjGwbcrnyr4AAkhXpCCMx");
 
@@ -13,9 +18,6 @@ pub enum Error {
     InvalidAuthority,
 }
 
-use create::*;
-use deposit::*;
-
 #[program]
 pub mod defi_101 {
     use super::*;
@@ -26,6 +28,10 @@ pub mod defi_101 {
 
     pub fn create(ctx: Context<Create>) -> Result<()> {
         create::create(ctx)
+    }
+
+    pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
+        swap::swap(ctx, amount)
     }
 }
 

@@ -6,6 +6,7 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   Keypair,
+  Connection,
 } from "npm:@solana/web3.js";
 import { makeKeypairs } from "npm:@solana-developers/helpers";
 import type { Defi101 } from "../target/types/defi_101.ts";
@@ -19,6 +20,7 @@ import {
   getMinimumBalanceForRentExemptMint,
 } from "npm:@solana/spl-token";
 import { Buffer } from "node:buffer";
+import exp from "node:constants";
 
 export const TOKEN_PROGRAM = TOKEN_2022_PROGRAM_ID;
 
@@ -166,4 +168,28 @@ export function ata(mint: PublicKey, keypair: Keypair) {
     false,
     TOKEN_PROGRAM
   );
+}
+
+export function fetchBalances(
+  connection: Connection,
+  account: Keypair,
+  mints: PublicKey[]
+) {
+  const accounts = mints.map((mint) => ata(mint, account));
+
+  return Promise.all(
+    accounts.map((account) => getTokenAccountBalance(connection, account))
+  );
+}
+
+async function getTokenAccountBalance(
+  connection: Connection,
+  account: PublicKey
+) {
+  try {
+    const balance = await connection.getTokenAccountBalance(account);
+    return balance.value.amount;
+  } catch (_) {
+    return "0";
+  }
 }

@@ -8,7 +8,7 @@ import {
   workspace,
 } from "npm:@coral-xyz/anchor";
 import { BN } from "npm:bn.js";
-import { prepare, ata, TOKEN_PROGRAM } from "./utils.ts";
+import { prepare, ata, TOKEN_PROGRAM, fetchBalances } from "./utils.ts";
 import { Keypair } from "npm:@solana/web3.js";
 
 setProvider(AnchorProvider.env());
@@ -86,6 +86,29 @@ Deno.test("Is initialized!", async (t) => {
     );
     assertEquals(balance_whale_after.value.amount, "700000000000");
     assertEquals(balance_whale_lp_after.value.amount, "300000000000");
+  });
+
+  await t.step("Swap", async () => {
+    const swapAmount = new BN(2e8);
+
+    const balances = await fetchBalances(connection, alice, [usd, abc]);
+    assertEquals(balances[0], "1000000000");
+    assertEquals(balances[1], "0");
+
+    const signature = await program.methods
+      .swap(swapAmount)
+      .accounts({
+        signer: alice.publicKey,
+        mintA: usd,
+        mintB: abc,
+        tokenProgram: TOKEN_PROGRAM,
+      })
+      .signers([alice])
+      .rpc();
+
+    const balances_after = await fetchBalances(connection, alice, [usd, abc]);
+    assertEquals(balances_after[0], "800000000");
+    assertEquals(balances_after[1], "200000000");
   });
 
   // Leave time for cleanup
