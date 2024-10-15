@@ -106,11 +106,32 @@ Deno.test("Is initialized!", async (t) => {
       .signers([alice])
       .rpc();
 
+    console.log("Swap transaction signature", signature);
+
     const balances_after = await fetchBalances(connection, alice, [usd, abc]);
     assertEquals(balances_after[0], "800000000");
     assertEquals(balances_after[1], "200000000");
   });
 
+  await t.step("Withdraw", async () => {
+    const balances = await fetchBalances(connection, whale, [mintLp]);
+    assertEquals(balances[0], "300000000000");
+
+    const signature = await program.methods
+      .withdraw()
+      .accounts({
+        signer: whale.publicKey,
+        tokenProgram: TOKEN_PROGRAM,
+        mintA: usd,
+        mintB: abc,
+        mintLp,
+      })
+      .signers([whale])
+      .rpc();
+
+    const balances_after = await fetchBalances(connection, whale, [mintLp]);
+    assertEquals(balances_after[0], "0");
+  });
   // Leave time for cleanup
   await delay(1000);
 });

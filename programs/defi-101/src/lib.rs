@@ -3,11 +3,12 @@ use anchor_lang::prelude::*;
 mod create;
 mod deposit;
 mod swap;
+mod withdraw;
 
 use create::*;
 use deposit::*;
 use swap::*;
-
+use withdraw::*;
 declare_id!("GwAUakR2tZWd5WQmvXfvSZJHjGwbcrnyr4AAkhXpCCMx");
 
 #[error_code]
@@ -32,6 +33,10 @@ pub mod defi_101 {
 
     pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
         swap::swap(ctx, amount)
+    }
+
+    pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
+        withdraw::withdraw(ctx)
     }
 }
 
