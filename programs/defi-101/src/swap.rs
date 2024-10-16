@@ -55,68 +55,83 @@ pub struct Swap<'info> {
 }
 
 pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
-    send_wanted_tokens(&ctx, amount)?;
+    if amount > 0 {
+        swap_a_for_b(&ctx, amount as u64)
+    } else {
+        swap_b_for_a(&ctx, amount.checked_abs().unwrap() as u64)
+    }
+}
+
+fn swap_a_for_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+    take_token_a(ctx, amount)?;
+    send_token_b(ctx, amount)?;
     Ok(())
 }
 
-pub fn send_wanted_tokens(ctx: &Context<Swap>, amount: i64) -> Result<()> {
+fn swap_b_for_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+    take_token_b(ctx, amount)?;
+    send_token_a(ctx, amount)?;
+    Ok(())
+}
+
+fn take_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+    let take_a = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        TransferChecked {
+            from: ctx.accounts.depositor_account_a.to_account_info(),
+            mint: ctx.accounts.mint_a.to_account_info(),
+            to: ctx.accounts.vault_a.to_account_info(),
+            authority: ctx.accounts.signer.to_account_info(),
+        },
+    );
+    transfer_checked(take_a, amount, ctx.accounts.mint_a.decimals)?;
+    Ok(())
+}
+
+fn take_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+    let take_b = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        TransferChecked {
+            from: ctx.accounts.depositor_account_b.to_account_info(),
+            mint: ctx.accounts.mint_b.to_account_info(),
+            to: ctx.accounts.vault_b.to_account_info(),
+            authority: ctx.accounts.signer.to_account_info(),
+        },
+    );
+    transfer_checked(take_b, amount, ctx.accounts.mint_b.decimals)?;
+    Ok(())
+}
+
+fn send_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
     let signer = &[&seeds[..]];
+    let send_a = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        TransferChecked {
+            from: ctx.accounts.vault_a.to_account_info(),
+            mint: ctx.accounts.mint_a.to_account_info(),
+            to: ctx.accounts.depositor_account_a.to_account_info(),
+            authority: ctx.accounts.vault.to_account_info(),
+        },
+    )
+    .with_signer(signer);
+    transfer_checked(send_a, amount, ctx.accounts.mint_a.decimals)?;
+    Ok(())
+}
 
-    // TODO: fit on stack.
-
-    let (take, send) = if amount > 0 {
-        let take_a = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            TransferChecked {
-                from: ctx.accounts.depositor_account_a.to_account_info(),
-                mint: ctx.accounts.mint_a.to_account_info(),
-                to: ctx.accounts.vault_a.to_account_info(),
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        );
-
-        let send_b = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            TransferChecked {
-                from: ctx.accounts.vault_b.to_account_info(),
-                mint: ctx.accounts.mint_b.to_account_info(),
-                to: ctx.accounts.depositor_account_b.to_account_info(),
-                authority: ctx.accounts.vault.to_account_info(),
-            },
-        )
-        .with_signer(signer);
-
-        (take_a, send_b)
-    } else {
-        let take_b = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            TransferChecked {
-                from: ctx.accounts.depositor_account_b.to_account_info(),
-                mint: ctx.accounts.mint_b.to_account_info(),
-                to: ctx.accounts.vault_b.to_account_info(),
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        );
-
-        let send_a = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            TransferChecked {
-                from: ctx.accounts.vault_a.to_account_info(),
-                mint: ctx.accounts.mint_a.to_account_info(),
-                to: ctx.accounts.depositor_account_a.to_account_info(),
-                authority: ctx.accounts.vault.to_account_info(),
-            },
-        )
-        .with_signer(signer);
-
-        (take_b, send_a)
-    };
-
-    let amount = amount.checked_abs().unwrap() as u64;
-
-    transfer_checked(take, amount, ctx.accounts.mint_a.decimals)?;
-    transfer_checked(send, amount, ctx.accounts.mint_b.decimals)?;
-
+fn send_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+    let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
+    let signer = &[&seeds[..]];
+    let send_b = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        TransferChecked {
+            from: ctx.accounts.vault_b.to_account_info(),
+            mint: ctx.accounts.mint_b.to_account_info(),
+            to: ctx.accounts.depositor_account_b.to_account_info(),
+            authority: ctx.accounts.vault.to_account_info(),
+        },
+    )
+    .with_signer(signer);
+    transfer_checked(send_b, amount, ctx.accounts.mint_b.decimals)?;
     Ok(())
 }

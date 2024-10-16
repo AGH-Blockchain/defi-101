@@ -7,6 +7,14 @@ use anchor_spl::{
 
 use crate::Vault;
 
+pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    deposit_token_a(&ctx, amount)?;
+    deposit_token_b(&ctx, amount)?;
+    mint_lp_tokens(&ctx, amount)?;
+
+    Ok(())
+}
+
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut)]
@@ -68,12 +76,7 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-    send_wanted_tokens(&ctx, amount)?;
-    Ok(())
-}
-
-pub fn send_wanted_tokens(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
+pub fn deposit_token_a(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     let transfer_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -83,6 +86,11 @@ pub fn send_wanted_tokens(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
+    transfer_checked(transfer_a, amount, ctx.accounts.mint_a.decimals)?;
+    Ok(())
+}
+
+pub fn deposit_token_b(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     let transfer_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -92,10 +100,11 @@ pub fn send_wanted_tokens(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-
-    transfer_checked(transfer_a, amount, ctx.accounts.mint_a.decimals)?;
     transfer_checked(transfer_b, amount, ctx.accounts.mint_b.decimals)?;
+    Ok(())
+}
 
+pub fn mint_lp_tokens(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
     let signer = &[&seeds[..]];
 

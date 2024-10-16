@@ -74,18 +74,16 @@ pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
     let amount_a = amount * ctx.accounts.vault_a.amount as u128 / total_lp;
     let amount_b = amount * ctx.accounts.vault_b.amount as u128 / total_lp;
 
-    send_wanted_tokens(&ctx, (amount_a as u64, amount_b as u64), amount as u64)?;
+    send_token_a(&ctx, amount_a as u64)?;
+    send_token_b(&ctx, amount_b as u64)?;
+    burn_lp_tokens(&ctx, amount as u64)?;
+
     Ok(())
 }
 
-pub fn send_wanted_tokens(
-    ctx: &Context<Withdraw>,
-    (amount_a, amount_b): (u64, u64),
-    amount: u64,
-) -> Result<()> {
+fn send_token_a(ctx: &Context<Withdraw>, amount_a: u64) -> Result<()> {
     let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
     let signer = &[&seeds[..]];
-
     let transfer_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -96,7 +94,12 @@ pub fn send_wanted_tokens(
         },
     )
     .with_signer(signer);
+    transfer_checked(transfer_a, amount_a, ctx.accounts.mint_a.decimals)
+}
 
+fn send_token_b(ctx: &Context<Withdraw>, amount_b: u64) -> Result<()> {
+    let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
+    let signer = &[&seeds[..]];
     let transfer_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
@@ -107,10 +110,10 @@ pub fn send_wanted_tokens(
         },
     )
     .with_signer(signer);
+    transfer_checked(transfer_b, amount_b, ctx.accounts.mint_b.decimals)
+}
 
-    transfer_checked(transfer_a, amount_a, ctx.accounts.mint_a.decimals)?;
-    transfer_checked(transfer_b, amount_b, ctx.accounts.mint_b.decimals)?;
-
+fn burn_lp_tokens(ctx: &Context<Withdraw>, amount: u64) -> Result<()> {
     let burn_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         Burn {
@@ -119,7 +122,5 @@ pub fn send_wanted_tokens(
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-    burn(burn_ctx, amount)?;
-
-    Ok(())
+    burn(burn_ctx, amount)
 }
