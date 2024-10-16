@@ -8,18 +8,6 @@ use anchor_spl::{
 
 use crate::{Error, Vault};
 
-pub fn create(ctx: Context<Create>) -> Result<()> {
-    let mint_a = ctx.accounts.mint_a.key().to_string();
-    let mint_b = ctx.accounts.mint_b.key().to_string();
-
-    require!(
-        mint_a.cmp(&mint_b) == Ordering::Less,
-        Error::TokenXGreaterThanTokenY
-    );
-
-    Ok(())
-}
-
 #[derive(Accounts)]
 pub struct Create<'info> {
     #[account(mut)]
@@ -52,4 +40,16 @@ pub struct Create<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
+}
+
+pub fn create(ctx: Context<Create>) -> Result<()> {
+    let mint_a = ctx.accounts.mint_a.key().to_string();
+    let mint_b = ctx.accounts.mint_b.key().to_string();
+
+    require!(
+        mint_a.cmp(&mint_b) == Ordering::Less,
+        Error::TokenXGreaterThanTokenY
+    );
+
+    Ok(())
 }

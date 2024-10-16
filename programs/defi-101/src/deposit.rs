@@ -7,14 +7,6 @@ use anchor_spl::{
 
 use crate::Vault;
 
-pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-    deposit_token_a(&ctx, amount)?;
-    deposit_token_b(&ctx, amount)?;
-    mint_lp_tokens(&ctx, amount)?;
-
-    Ok(())
-}
-
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut)]
@@ -27,13 +19,13 @@ pub struct Deposit<'info> {
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
-    pub depositor_account_a: InterfaceAccount<'info, TokenAccount>,
+    pub depositor_account_a: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(mut,
         associated_token::mint = mint_b,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
-    pub depositor_account_b: InterfaceAccount<'info, TokenAccount>,
+    pub depositor_account_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(init_if_needed,
         payer = signer,
@@ -41,7 +33,7 @@ pub struct Deposit<'info> {
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
-    pub depositor_account_lp: InterfaceAccount<'info, TokenAccount>,
+    pub depositor_account_lp: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(init_if_needed,
         payer = signer,
@@ -118,6 +110,14 @@ pub fn mint_lp_tokens(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     )
     .with_signer(signer);
     mint_to(mint_to_ctx, amount)?;
+
+    Ok(())
+}
+
+pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    deposit_token_a(&ctx, amount)?;
+    deposit_token_b(&ctx, amount)?;
+    mint_lp_tokens(&ctx, amount)?;
 
     Ok(())
 }

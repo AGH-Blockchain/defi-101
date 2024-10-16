@@ -54,14 +54,6 @@ pub struct Swap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
-    if amount > 0 {
-        swap_a_for_b(&ctx, amount as u64)
-    } else {
-        swap_b_for_a(&ctx, amount.checked_abs().unwrap() as u64)
-    }
-}
-
 fn swap_a_for_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     take_token_a(ctx, amount)?;
     send_token_b(ctx, amount)?;
@@ -134,4 +126,12 @@ fn send_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     .with_signer(signer);
     transfer_checked(send_b, amount, ctx.accounts.mint_b.decimals)?;
     Ok(())
+}
+
+pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
+    if amount > 0 {
+        swap_a_for_b(&ctx, amount as u64)
+    } else {
+        swap_b_for_a(&ctx, amount.checked_abs().unwrap() as u64)
+    }
 }

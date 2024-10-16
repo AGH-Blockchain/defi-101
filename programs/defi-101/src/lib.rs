@@ -9,7 +9,8 @@ use create::*;
 use deposit::*;
 use swap::*;
 use withdraw::*;
-declare_id!("GwAUakR2tZWd5WQmvXfvSZJHjGwbcrnyr4AAkhXpCCMx");
+
+declare_id!("DTbmTgiTzYdf3dXNJ9EFm5CT6iKBHubcCqTNJLazLEzt");
 
 #[error_code]
 pub enum Error {

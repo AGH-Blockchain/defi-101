@@ -16,6 +16,8 @@ const program = workspace.Defi101 as Program<Defi101>;
 const connection = program.provider.connection!;
 
 Deno.test("Is initialized!", async (t) => {
+  console.log("Environment variables:");
+
   const { keypairs, mints, vault } = await prepare(program, 5, 2);
 
   const [usd, abc] = mints;
