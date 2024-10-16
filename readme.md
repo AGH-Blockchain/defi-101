@@ -27,14 +27,16 @@ anchor test
 
 ```bash
 anchor deploy --provider.cluster devnet
+deno task init 
 ```
+Add token addresses to `scripts/common.ts`, for the use in other scripts.
 
 ### Interact
 
+To interact with the smart contract, you can use the following commands:
 ```bash
-deno run --allow-net scripts/init.ts
-deno run --allow-net scripts/deposit.ts
-deno run --allow-net scripts/swap.ts
+deno task deposit
+deno task swap
 ```
 
 ## Glossary 
@@ -55,11 +57,13 @@ deno run --allow-net scripts/swap.ts
 This is a basic proof of concept. There are many things to improve:
 
 - implement the constant product formula
+- add a withdraw script
 - allow for multiple token pairs in a single contract
 - audit security of the contract (left some vulnerabilities on purpose)
 - add a fee to the swap
 - add a minimalistic frontend
 - extent the test suite to multiple Liquidity Providers (LPs)
+- create detailed documentation and code comments
 
 ## License
 
