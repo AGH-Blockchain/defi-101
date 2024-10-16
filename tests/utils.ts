@@ -95,14 +95,21 @@ export function mintToAccounts(
         false,
         TOKEN_PROGRAM
       );
+
+      const createAtaInstruction = createAssociatedTokenAccountInstruction(
+        mintAuthority,
+        ata,
+        authority,
+        mint,
+        TOKEN_PROGRAM
+      );
+
+      if (amount === 0) {
+        return [createAtaInstruction];
+      }
+
       return [
-        createAssociatedTokenAccountInstruction(
-          mintAuthority,
-          ata,
-          authority,
-          mint,
-          TOKEN_PROGRAM
-        ),
+        createAtaInstruction,
         createMintToInstruction(
           mint,
           ata,
@@ -133,6 +140,8 @@ export async function prepare(
   );
   const mintTokensInstructions = await mintToAccounts(program, [
     [keypairs[0].publicKey, mints[0].publicKey, 1e9],
+    [keypairs[0].publicKey, mints[1].publicKey, 0],
+    [keypairs[1].publicKey, mints[0].publicKey, 0],
     [keypairs[1].publicKey, mints[1].publicKey, 1e9],
     [keypairs[2].publicKey, mints[0].publicKey, 1e12],
     [keypairs[2].publicKey, mints[1].publicKey, 1e12],

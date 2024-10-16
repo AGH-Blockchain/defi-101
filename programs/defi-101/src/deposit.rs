@@ -1,11 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{mint_to, transfer_checked, MintTo, TransferChecked},
+    token_2022::{mint_to, MintTo},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
 use crate::Vault;
+use crate::{transfer, Transfer};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -15,13 +16,13 @@ pub struct Deposit<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(mut,
-        associated_token::mint = mint_a,
+        associated_token::mint = vault.token_a,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
     pub depositor_account_a: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(mut,
-        associated_token::mint = mint_b,
+        associated_token::mint = vault.token_b,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
@@ -35,16 +36,14 @@ pub struct Deposit<'info> {
     )]
     pub depositor_account_lp: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_a,
+    #[account(mut,
+        associated_token::mint = vault.token_a,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
     pub vault_a: Box<InterfaceAccount<'info, TokenAccount>>,
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_b,
+    #[account(mut,
+        associated_token::mint = vault.token_b,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
@@ -58,11 +57,6 @@ pub struct Deposit<'info> {
     )]
     pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(mint::token_program = token_program)]
-    pub mint_a: Box<InterfaceAccount<'info, Mint>>,
-    #[account(mint::token_program = token_program)]
-    pub mint_b: Box<InterfaceAccount<'info, Mint>>,
-
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -71,28 +65,26 @@ pub struct Deposit<'info> {
 pub fn deposit_token_a(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     let transfer_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.depositor_account_a.to_account_info(),
-            mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.vault_a.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-    transfer_checked(transfer_a, amount, ctx.accounts.mint_a.decimals)?;
+    transfer(transfer_a, amount)?;
     Ok(())
 }
 
 pub fn deposit_token_b(ctx: &Context<Deposit>, amount: u64) -> Result<()> {
     let transfer_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.depositor_account_b.to_account_info(),
-            mint: ctx.accounts.mint_b.to_account_info(),
             to: ctx.accounts.vault_b.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-    transfer_checked(transfer_b, amount, ctx.accounts.mint_b.decimals)?;
+    transfer(transfer_b, amount)?;
     Ok(())
 }
 

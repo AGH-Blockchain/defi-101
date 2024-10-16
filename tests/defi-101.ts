@@ -35,6 +35,17 @@ Deno.test("Is initialized!", async (t) => {
         mintLp,
         tokenProgram: TOKEN_PROGRAM,
       })
+      .postInstructions([
+        await program.methods
+          .initialize()
+          .accounts({
+            signer: whale.publicKey,
+            mintA: usd,
+            mintB: abc,
+            tokenProgram: TOKEN_PROGRAM,
+          })
+          .instruction(),
+      ])
       .signers([whale, mintLpKeypair])
       .rpc();
     console.log("Create pool transaction signature", signature);
@@ -46,14 +57,12 @@ Deno.test("Is initialized!", async (t) => {
       .deposit(depositAmount)
       .accounts({
         signer: whale.publicKey,
-        // vault,
-        mintA: usd,
-        mintB: abc,
         mintLp,
         tokenProgram: TOKEN_PROGRAM,
       })
       .signers([whale])
       .rpc();
+
     console.log("Deposit transaction signature", signature);
     const balance_whale_after = await connection.getTokenAccountBalance(
       ata(usd, whale)
@@ -71,8 +80,6 @@ Deno.test("Is initialized!", async (t) => {
       .deposit(depositAmount)
       .accounts({
         signer: whale.publicKey,
-        mintA: usd,
-        mintB: abc,
         mintLp,
         tokenProgram: TOKEN_PROGRAM,
       })
@@ -101,8 +108,6 @@ Deno.test("Is initialized!", async (t) => {
       .swap(swapAmount)
       .accounts({
         signer: alice.publicKey,
-        mintA: usd,
-        mintB: abc,
         tokenProgram: TOKEN_PROGRAM,
       })
       .signers([alice])
@@ -124,8 +129,6 @@ Deno.test("Is initialized!", async (t) => {
       .accounts({
         signer: whale.publicKey,
         tokenProgram: TOKEN_PROGRAM,
-        mintA: usd,
-        mintB: abc,
         mintLp,
       })
       .signers([whale])

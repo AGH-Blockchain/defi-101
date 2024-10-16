@@ -1,11 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{transfer_checked, TransferChecked},
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_interface::{TokenAccount, TokenInterface},
 };
 
-use crate::Vault;
+use crate::{transfer, Transfer, Vault};
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
@@ -14,40 +13,31 @@ pub struct Swap<'info> {
     #[account(seeds = [b"vault"], bump)]
     pub vault: Box<Account<'info, Vault>>,
 
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_a,
+    #[account(mut,
+        associated_token::mint = vault.token_a,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
-    pub depositor_account_a: InterfaceAccount<'info, TokenAccount>,
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_b,
+    pub depositor_account_a: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(mut,
+        associated_token::mint = vault.token_b,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
-    pub depositor_account_b: InterfaceAccount<'info, TokenAccount>,
+    pub depositor_account_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_a,
+    #[account(mut,
+        associated_token::mint = vault.token_a,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
     pub vault_a: Box<InterfaceAccount<'info, TokenAccount>>,
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_b,
+    #[account(mut,
+        associated_token::mint = vault.token_b,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
     pub vault_b: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(mint::token_program = token_program)]
-    pub mint_a: Box<InterfaceAccount<'info, Mint>>,
-    #[account(mint::token_program = token_program)]
-    pub mint_b: Box<InterfaceAccount<'info, Mint>>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -69,28 +59,28 @@ fn swap_b_for_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
 fn take_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     let take_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.depositor_account_a.to_account_info(),
-            mint: ctx.accounts.mint_a.to_account_info(),
+            // mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.vault_a.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-    transfer_checked(take_a, amount, ctx.accounts.mint_a.decimals)?;
+    transfer(take_a, amount)?;
     Ok(())
 }
 
 fn take_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     let take_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.depositor_account_b.to_account_info(),
-            mint: ctx.accounts.mint_b.to_account_info(),
+            // mint: ctx.accounts.mint_b.to_account_info(),
             to: ctx.accounts.vault_b.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
     );
-    transfer_checked(take_b, amount, ctx.accounts.mint_b.decimals)?;
+    transfer(take_b, amount)?;
     Ok(())
 }
 
@@ -99,32 +89,33 @@ fn send_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     let signer = &[&seeds[..]];
     let send_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.vault_a.to_account_info(),
-            mint: ctx.accounts.mint_a.to_account_info(),
+            // mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.depositor_account_a.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(),
         },
     )
     .with_signer(signer);
-    transfer_checked(send_a, amount, ctx.accounts.mint_a.decimals)?;
+    transfer(send_a, amount)?;
     Ok(())
 }
 
+#[inline(never)]
 fn send_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
     let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault]];
     let signer = &[&seeds[..]];
     let send_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.vault_b.to_account_info(),
-            mint: ctx.accounts.mint_b.to_account_info(),
             to: ctx.accounts.depositor_account_b.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(),
         },
     )
     .with_signer(signer);
-    transfer_checked(send_b, amount, ctx.accounts.mint_b.decimals)?;
+    transfer(send_b, amount)?;
+
     Ok(())
 }
 

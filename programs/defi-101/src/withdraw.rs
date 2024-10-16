@@ -1,11 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{burn, transfer_checked, Burn, TransferChecked},
+    token_2022::{burn, Burn},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
 use crate::Vault;
+use crate::{transfer, Transfer};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -15,36 +16,33 @@ pub struct Withdraw<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(mut,
-        associated_token::mint = mint_a,
+        associated_token::mint = vault.token_a,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
     pub depositor_account_a: InterfaceAccount<'info, TokenAccount>,
     #[account(mut,
-        associated_token::mint = mint_b,
+        associated_token::mint = vault.token_b,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
     pub depositor_account_b: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_lp,
+    #[account(mut,
+        associated_token::mint = vault.token_lp,
         associated_token::authority = signer,
         associated_token::token_program = token_program
     )]
     pub depositor_account_lp: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_a,
+    #[account(mut,
+        associated_token::mint = vault.token_a,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
     pub vault_a: Box<InterfaceAccount<'info, TokenAccount>>,
-    #[account(init_if_needed,
-        payer = signer,
-        associated_token::mint = mint_b,
+    #[account(mut,
+        associated_token::mint = vault.token_b,
         associated_token::authority = vault,
         associated_token::token_program = token_program
     )]
@@ -58,11 +56,6 @@ pub struct Withdraw<'info> {
     )]
     pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(mint::token_program = token_program)]
-    pub mint_a: Box<InterfaceAccount<'info, Mint>>,
-    #[account(mint::token_program = token_program)]
-    pub mint_b: Box<InterfaceAccount<'info, Mint>>,
-
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -73,15 +66,14 @@ fn send_token_a(ctx: &Context<Withdraw>, amount_a: u64) -> Result<()> {
     let signer = &[&seeds[..]];
     let transfer_a = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.vault_a.to_account_info(),
-            mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.depositor_account_a.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(),
         },
     )
     .with_signer(signer);
-    transfer_checked(transfer_a, amount_a, ctx.accounts.mint_a.decimals)
+    transfer(transfer_a, amount_a)
 }
 
 fn send_token_b(ctx: &Context<Withdraw>, amount_b: u64) -> Result<()> {
@@ -89,15 +81,14 @@ fn send_token_b(ctx: &Context<Withdraw>, amount_b: u64) -> Result<()> {
     let signer = &[&seeds[..]];
     let transfer_b = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
+        Transfer {
             from: ctx.accounts.vault_b.to_account_info(),
-            mint: ctx.accounts.mint_b.to_account_info(),
             to: ctx.accounts.depositor_account_b.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(),
         },
     )
     .with_signer(signer);
-    transfer_checked(transfer_b, amount_b, ctx.accounts.mint_b.decimals)
+    transfer(transfer_b, amount_b)
 }
 
 fn burn_lp_tokens(ctx: &Context<Withdraw>, amount: u64) -> Result<()> {

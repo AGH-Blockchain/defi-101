@@ -6,7 +6,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenInterface},
 };
 
-use crate::{Error, Vault};
+use crate::{ErrorCodes, Vault};
 
 #[derive(Accounts)]
 pub struct Create<'info> {
@@ -43,12 +43,14 @@ pub struct Create<'info> {
 }
 
 pub fn create(ctx: Context<Create>) -> Result<()> {
-    let mint_a = ctx.accounts.mint_a.key().to_string();
-    let mint_b = ctx.accounts.mint_b.key().to_string();
+    let vault = &mut *ctx.accounts.vault;
+    vault.token_a = ctx.accounts.mint_a.key();
+    vault.token_b = ctx.accounts.mint_b.key();
+    vault.token_lp = ctx.accounts.mint_lp.key();
 
     require!(
-        mint_a.cmp(&mint_b) == Ordering::Less,
-        Error::TokenXGreaterThanTokenY
+        vault.token_a.to_string().cmp(&vault.token_b.to_string()) == Ordering::Less,
+        ErrorCodes::TokenXGreaterThanTokenY
     );
 
     Ok(())
