@@ -3,6 +3,7 @@
     "init": "deno -R -E --allow-sys --allow-ffi --allow-net scripts/init.ts",
     "mint": "deno -R -E --allow-sys --allow-ffi --allow-net scripts/mint.ts",
     "deposit": "deno -R -E --allow-sys --allow-ffi --allow-net scripts/deposit.ts",
+    "swap": "deno -R -E --allow-sys --allow-ffi --allow-net scripts/swap.ts",
     "balances": "spl-token accounts"
   }
 }

@@ -1,18 +1,14 @@
-import { PublicKey } from "npm:@solana/web3.js";
 import { TOKEN_PROGRAM } from "../tests/utils.ts";
-import { getProgram, mintA, mintB, mintLp } from "./common.ts";
+import { getProgram } from "./common.ts";
 import BN from "npm:bn.js";
 
 const program = getProgram();
 
-const depositAmount = new BN(1e7);
+const swapAmount = new BN(-1e5);
 const signature = await program.methods
-  .deposit(depositAmount)
+  .swap(swapAmount)
   .accounts({
     signer: program.provider.publicKey,
-    mintA,
-    mintB,
-    mintLp,
     tokenProgram: TOKEN_PROGRAM,
   })
   .signers([])

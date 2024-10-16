@@ -61,7 +61,6 @@ fn take_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
         ctx.accounts.token_program.to_account_info(),
         Transfer {
             from: ctx.accounts.depositor_account_a.to_account_info(),
-            // mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.vault_a.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
@@ -75,7 +74,6 @@ fn take_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
         ctx.accounts.token_program.to_account_info(),
         Transfer {
             from: ctx.accounts.depositor_account_b.to_account_info(),
-            // mint: ctx.accounts.mint_b.to_account_info(),
             to: ctx.accounts.vault_b.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
         },
@@ -91,7 +89,6 @@ fn send_token_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
         ctx.accounts.token_program.to_account_info(),
         Transfer {
             from: ctx.accounts.vault_a.to_account_info(),
-            // mint: ctx.accounts.mint_a.to_account_info(),
             to: ctx.accounts.depositor_account_a.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(),
         },

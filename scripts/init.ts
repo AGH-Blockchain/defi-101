@@ -22,6 +22,17 @@ const signature = await program.methods
     tokenProgram: TOKEN_PROGRAM,
   })
   .preInstructions(createMintInstructions)
+  .postInstructions([
+    await program.methods
+      .initialize()
+      .accounts({
+        signer: program.provider.publicKey,
+        mintA: mintA.publicKey,
+        mintB: mintB.publicKey,
+        tokenProgram: TOKEN_PROGRAM,
+      })
+      .instruction(),
+  ])
   .signers([mintA, mintB, mintLp])
   .rpc();
 
