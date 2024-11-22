@@ -9,7 +9,8 @@ import { clusterApiUrl, Connection, PublicKey } from "npm:@solana/web3.js";
 
 export function getProgram() {
   Deno.env.set("ANCHOR_PROVIDER_URL", clusterApiUrl("devnet"));
-  Deno.env.set("ANCHOR_WALLET", "/home/mateo/.config/solana/id.json");
+  const homeDir = Deno.env.get("HOME");
+  Deno.env.set("ANCHOR_WALLET", `${homeDir}/.config/solana/id.json`);
   const connection = new Connection(clusterApiUrl("devnet"));
   const provider = new AnchorProvider(connection, AnchorProvider.env().wallet);
   setProvider(provider);
