@@ -17,29 +17,68 @@ Deno is a TypeScript runtime that is used to run tests and interact with the sma
 
 ## Usage
 
+Start by generating your key if you have not done so before
+
+```bash
+solana-keygen new
+```
+
 ### Build and test
+
 ```bash
 anchor build
 anchor test
 ```
 
+### Initial setup
+
+Set the Solana CLI configuration to use the default Solana devnet RPC endpoint:
+
+```bash
+solana config set -u d
+```
+
+Check the public address associated with the key in `target/deploy/defi_101-keypair.json`:
+
+```bash
+solana address -k target/deploy/defi_101-keypair.json
+```
+
+and place it in `src/lib.rs` in
+
+```bash
+declare_id!(`PUBLIC_KEY`);
+```
+
+replacing `PUBLIC_KEY`.
+
+Get free SOL tokens for later usage:
+
+```bash
+solana airdrop 2
+```
+
+Alternatively, you can use e.g.: [https://faucet.solana.com/]([https://faucet.solana.com/)
+
 ### Deploy
 
 ```bash
 anchor deploy --provider.cluster devnet
-deno task init 
+deno task init
 ```
+
 Add token addresses to `scripts/common.ts`, for the use in other scripts.
 
 ### Interact
 
 To interact with the smart contract, you can use the following commands:
+
 ```bash
 deno task deposit
 deno task swap
 ```
 
-## Glossary 
+## Glossary
 
 - **Token**: A token is a digital asset on Solana that can be used to pay for goods and services.
 - **AMM**: Automated Market Maker - A type of decentralized exchange (DEX) that allows users to exchange tokens.
@@ -50,7 +89,6 @@ deno task swap
 - **Deposit**: A deposit is a transaction that allows a user to add liquidity to an AMM pool.
 - **Withdraw**: A withdraw is a transaction that allows a user to remove liquidity from an AMM pool.
 - **Smart Contract**: A smart contract is a program that runs on the Solana blockchain. It is a self-executing contract with the terms of the agreement directly written into code.
-
 
 ## TODO
 
