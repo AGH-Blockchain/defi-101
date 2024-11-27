@@ -18,11 +18,11 @@ export function getProgram() {
 }
 
 export const mintA = new PublicKey(
-  "3JrxDnuphq6XUBz4CHMokmjB2jf51YRttzdRUg6K2Jqu"
+  "2D9x4K1obxpzceZqmGYGvWs7Qdh3aevzbwiLdUTw5RsW"
 );
 export const mintB = new PublicKey(
-  "8cBN4iFrWD3eeW4AJtjcWiVz2VS1x9HchWWskCJqPsdJ"
+  "AkTZ8gHXj8WweNdw7qtA7Y5VZNvbs85TvePPXLx5T2f6"
 );
 export const mintLp = new PublicKey(
-  "BfgtfKJiQZeEN4deAtpXPEuGryMDMJaJMtgz6NcxKXyM"
+  "9HQfnbbag15PwcbnWtt9k1gv16382FNpYjebYEy8grMb"
 );

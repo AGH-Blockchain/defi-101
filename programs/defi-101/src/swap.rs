@@ -44,15 +44,28 @@ pub struct Swap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-fn swap_a_for_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+fn swap_a_for_b(
+    ctx: &Context<Swap>,
+    amount: u64,
+    reserve_in_before: u64,
+    reserve_out_before: u64,
+) -> Result<()> {
+    let amount_out = calculate_out(reserve_in_before, reserve_out_before, amount)?;
+
     take_token_a(ctx, amount)?;
-    send_token_b(ctx, amount)?;
+    send_token_b(ctx, amount_out)?;
     Ok(())
 }
 
-fn swap_b_for_a(ctx: &Context<Swap>, amount: u64) -> Result<()> {
+fn swap_b_for_a(
+    ctx: &Context<Swap>,
+    amount: u64,
+    reserve_a_before: u64,
+    reserve_b_before: u64,
+) -> Result<()> {
+    let amount_out = calculate_out(reserve_b_before, reserve_a_before, amount)?;
     take_token_b(ctx, amount)?;
-    send_token_a(ctx, amount)?;
+    send_token_a(ctx, amount_out)?;
     Ok(())
 }
 
@@ -117,9 +130,32 @@ fn send_token_b(ctx: &Context<Swap>, amount: u64) -> Result<()> {
 }
 
 pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
+    let reserve_a = ctx.accounts.vault_a.amount;
+    let reserve_b = ctx.accounts.vault_b.amount;
+
     if amount > 0 {
-        swap_a_for_b(&ctx, amount as u64)
+        swap_a_for_b(&ctx, amount as u64, reserve_a, reserve_b)
     } else {
-        swap_b_for_a(&ctx, amount.checked_abs().unwrap() as u64)
+        swap_b_for_a(
+            &ctx,
+            amount.checked_abs().unwrap() as u64,
+            reserve_b,
+            reserve_a,
+        )
     }
+}
+
+fn calculate_out(reserve_token_in: u64, reserve_token_out: u64, amount_in: u64) -> Result<u64> {
+    let k = reserve_token_in * reserve_token_out;
+    let reserve_in_after = reserve_token_in + amount_in;
+    let reserve_out_after = k / reserve_in_after;
+    // let reserve_out_after = (k + reserve_in_after - 1) / (reserve_in_after);
+
+    Ok(reserve_token_out - reserve_out_after)
+}
+
+#[test]
+fn test_calculate_out() {
+    let amount_out = calculate_out(100, 100, 10).unwrap();
+    assert_eq!(amount_out, 9);
 }

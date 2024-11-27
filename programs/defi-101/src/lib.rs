@@ -16,7 +16,7 @@ use initialize::*;
 use swap::*;
 use withdraw::*;
 
-declare_id!("Gz7r7kr5qKcyAopoLagsGJqVmJVUwM3szmmmiFME5uAf");
+declare_id!("8aNcZnrRbZmftxG6HeNjw2YKD7V7HeD3XLp1dqujYewp");
 
 #[program]
 pub mod defi_101 {
