@@ -146,9 +146,11 @@ pub fn swap(ctx: Context<Swap>, amount: i64) -> Result<()> {
 }
 
 fn calculate_out(reserve_token_in: u64, reserve_token_out: u64, amount_in: u64) -> Result<u64> {
-    let _k = reserve_token_in * reserve_token_out;
+    let k = reserve_token_in * reserve_token_out;
+    let reserve_in_after = reserve_token_in + amount_in;
+    let reserve_out_after = k / reserve_in_after;
 
-    Ok(amount_in / 2)
+    Ok(reserve_token_out - reserve_out_after)
 }
 
 #[test]
